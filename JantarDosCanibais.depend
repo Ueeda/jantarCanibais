@@ -1,6 +1,9 @@
 # depslib dependency file v1.0
-1491424722 source:/home/rafael/www/JantarDosCanibais/main.c
+1492048731 source:/home/rafael/www/JantarDosCanibais/main.c
 	<stdio.h>
 	<stdlib.h>
 	<pthread.h>
+	<stdbool.h>
+	<unistd.h>
+	<time.h>
 
