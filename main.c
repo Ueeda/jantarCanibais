@@ -11,7 +11,8 @@ int caldeirao = 0;
 int iniciaThread;
 pthread_t selvagens[30];
 pthread_t cozinheiro;
-pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex1;
+pthread_cond_t selvagens_cond;
 
 ////////////////////////////// Structs
 
@@ -26,7 +27,7 @@ struct structCozinheiro{
 ////////////////////////////// Métodos
 
 void *adicionarCaldeirao(void *ptr);
-void comer();
+void *comer();
 void *servir(void *ptr);
 
 ////////////////////////////// Criação da Thread
@@ -50,15 +51,21 @@ int main()
     }
 
     iniciaThread = pthread_create( &cozinheiro, NULL, (void*)&adicionarCaldeirao, (void*)cozinheiro);
-    cont++;
+
+    for(int i =0; i<30; i++){
+        pthread_join(selvagens[i], NULL);
+    }
+
     return 0;
 }
 
 void *adicionarCaldeirao(void *ptr){
+    printf("fazendo");
     pthread_mutex_lock(&mutex1);
     caldeirao = 12;
-    sleep(7000);
+    //sleep(7);
     pthread_mutex_unlock(&mutex1);
+    pthread_cond_broadcast(&selvagens_cond);
 }
 
 void *servir(void *ptr){
@@ -67,14 +74,15 @@ void *servir(void *ptr){
         pthread_mutex_lock(&mutex1);
         caldeirao--;
         pthread_mutex_unlock(&mutex1);
-        comer();
+        *comer();
     }
     else{
+        pthread_cond_wait(&selvagens_cond, &mutex1);
         *adicionarCaldeirao(&cozinheiro);
     }
 }
 
-void comer(){
+void *comer(){
     int dormir = rand() % 3;
     sleep(dormir + 1);
 }
