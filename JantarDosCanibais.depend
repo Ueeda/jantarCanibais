@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1492196338 source:/home/rafael/www/JantarDosCanibais/main.c
+1492479069 source:/home/rafael/www/JantarDosCanibais/main.c
 	<stdio.h>
 	<stdlib.h>
 	<pthread.h>

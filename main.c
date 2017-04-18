@@ -7,12 +7,13 @@
 
 ////////////////////////////// Variáveis Globais
 
-int caldeirao = 0;
+int caldeirao = 12;
 int iniciaThread;
 pthread_t selvagens[30];
 pthread_t cozinheiro;
-pthread_mutex_t mutex1;
-pthread_cond_t selvagens_cond;
+pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t selvagens_cond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t cozinheiro_cond = PTHREAD_COND_INITIALIZER;
 
 ////////////////////////////// Structs
 
@@ -26,9 +27,10 @@ struct structCozinheiro{
 
 ////////////////////////////// Métodos
 
+void *metodoSelvagem(void *ptr);
 void *adicionarCaldeirao(void *ptr);
-void *comer();
-void *servir(void *ptr);
+void comer();
+void servir();
 
 ////////////////////////////// Criação da Thread
 
@@ -45,9 +47,8 @@ int pthread_join(pthread_t th, //ID da thread)
 
 int main()
 {
-    int cont = 0;
     for(int i =0; i<30; i++){
-        iniciaThread = pthread_create( &selvagens[i], NULL, (void*)&servir, (void*)i);
+        iniciaThread = pthread_create( &selvagens[i], NULL, (void*)&metodoSelvagem, (void*)i);
     }
 
     iniciaThread = pthread_create( &cozinheiro, NULL, (void*)&adicionarCaldeirao, (void*)cozinheiro);
@@ -56,33 +57,46 @@ int main()
         pthread_join(selvagens[i], NULL);
     }
 
+    pthread_join(cozinheiro, NULL);
+
     return 0;
 }
 
 void *adicionarCaldeirao(void *ptr){
-    printf("fazendo");
-    pthread_mutex_lock(&mutex1);
-    caldeirao = 12;
-    //sleep(7);
-    pthread_mutex_unlock(&mutex1);
-    pthread_cond_broadcast(&selvagens_cond);
+    while(true){
+        pthread_mutex_lock(&mutex1);
+        printf("Fazendo");
+        caldeirao = 12;
+        //sleep(7);
+        pthread_cond_wait(&cozinheiro_cond, &mutex1);
+        pthread_cond_broadcast(&selvagens_cond);
+        pthread_mutex_unlock(&mutex1);
+    }
 }
 
-void *servir(void *ptr){
-    printf("comendo ");
+void *metodoSelvagem(void *ptr){
+    while(true){
+        servir();
+
+        comer();
+    }
+}
+
+void servir(){
+    pthread_mutex_lock(&mutex1);
+    printf("%d ", caldeirao);
     if(caldeirao > 0){
-        pthread_mutex_lock(&mutex1);
         caldeirao--;
-        pthread_mutex_unlock(&mutex1);
-        *comer();
     }
     else{
         pthread_cond_wait(&selvagens_cond, &mutex1);
-        *adicionarCaldeirao(&cozinheiro);
+        pthread_cond_signal(&cozinheiro_cond);
     }
+    pthread_mutex_unlock(&mutex1);
 }
 
-void *comer(){
+void comer(){
+    printf("comendo");
     int dormir = rand() % 3;
     sleep(dormir + 1);
 }
