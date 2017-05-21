@@ -15,6 +15,12 @@ pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t selvagens_cond = PTHREAD_COND_INITIALIZER;
 pthread_cond_t cozinheiro_cond = PTHREAD_COND_INITIALIZER;
 
+/* VER SE ROLA ASSIM
+pthread_t struct structCanibal{
+    int qntComeu;
+};
+*/
+
 ////////////////////////////// Structs
 
 struct structCanibal{
@@ -30,8 +36,8 @@ struct structCozinheiro{
 void *metodoSelvagem(void *ptr);
 void *adicionarCaldeirao(void *ptr);
 void comer();
-void servir();
-
+//void servir();
+void *servir(void *ptr);
 ////////////////////////////// Criação da Thread
 
 int pthread_create(pthread_t *thread, //identificador)
@@ -44,14 +50,20 @@ int pthread_join(pthread_t th, //ID da thread)
 	void **thread_return); //recebe o valor retornado na thread extra)
 
 
+int pthread_cond_init(pthread_cond_t *restrict cond, const pthread_condattr_t *restrict attr);
+int pthread_cond_destroy(pthread_cond_t *cond);
+int pthread_cond_wait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex);
+int pthread_cond_signal(pthread_cond_t *cond);
+int pthread_cond_broadcast(pthread_cond_t *cond);
 
-int main()
+void  main()
 {
+
     for(int i =0; i<30; i++){
-        iniciaThread = pthread_create( &selvagens[i], NULL, (void*)&metodoSelvagem, (void*)i);
+        iniciaThread = pthread_create( &selvagens[i], NULL, (void*)&servir, (void*)i);
     }
 
-    iniciaThread = pthread_create( &cozinheiro, NULL, (void*)&adicionarCaldeirao, (void*)cozinheiro);
+    iniciaThread = pthread_create( &cozinheiro, NULL, (void*)&adicionarCaldeirao, "Cozinheiro");
 
     for(int i =0; i<30; i++){
         pthread_join(selvagens[i], NULL);
@@ -59,30 +71,29 @@ int main()
 
     pthread_join(cozinheiro, NULL);
 
-    return 0;
+   // exit(EXIT_SUCCESS);
 }
 
 void *adicionarCaldeirao(void *ptr){
     while(true){
         pthread_mutex_lock(&mutex1);
-        printf("Fazendo");
+        printf("Cozinhando");
         caldeirao = 12;
-        //sleep(7);
+        sleep(7);
+
         pthread_cond_wait(&cozinheiro_cond, &mutex1);
         pthread_cond_broadcast(&selvagens_cond);
         pthread_mutex_unlock(&mutex1);
     }
 }
-
+/*
 void *metodoSelvagem(void *ptr){
     while(true){
         servir();
-
-        comer();
     }
 }
-
-void servir(){
+*/
+void *servir(void *ptr){
     pthread_mutex_lock(&mutex1);
     printf("%d ", caldeirao);
     if(caldeirao > 0){
@@ -91,8 +102,10 @@ void servir(){
     else{
         pthread_cond_wait(&selvagens_cond, &mutex1);
         pthread_cond_signal(&cozinheiro_cond);
+
     }
     pthread_mutex_unlock(&mutex1);
+    comer();
 }
 
 void comer(){
